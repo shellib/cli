@@ -55,9 +55,15 @@ function nfirstargs() {
 } 
 
 #
-# Filter the specified number of options and flags
-# Example:
-#   filteropts 2 -version --dry-run foo bar baz
+# Filter the specified number of options.
+# Examples:
+#   filteropts 2 -repo -user foo bar baz
+#   -> foo bar baz
+#
+#   filteropts 2 -repo -user -repo=shellib foo bar baz
+#   -> foo bar baz
+#
+#   filteropts 2 -repo -user -user=iocanel foo bar baz
 #   -> foo bar baz
 function filteropts() {
         num=$1
@@ -69,6 +75,7 @@ function filteropts() {
                 next=false
                 #Loop through arguments starting from skip
                 for candidate in "${@:$skip}"; do
+                        #If the previous item is the option, then this is the value. So let's skip it.
                         if $next; then
                                 next=false
                                 continue;
@@ -84,6 +91,32 @@ function filteropts() {
                         if ! $next; then
                                 echo $candidate
                         fi
+                done
+        fi
+}
+#
+# Filter the specified number of flags.
+# Example:
+#   filterflags 2 -version -dry-run foo bar baz
+#   -> foo bar baz
+function filteropts() {
+        num=$1
+        if echo $num | grep '[^0-9]' > /dev/null; then
+                echo "$@"
+        else
+                skip=$(($num+2))
+                tofilter=`nfirstargs $@`
+                #Loop through arguments starting from skip
+                for candidate in "${@:$skip}"; do
+                        #Loop through items that need to be skiped and see if candidate is included
+                        for i in $tofilter; do
+                                if [ $candidate = "$i" ]; then
+                                        next=true
+                                        break;
+                                else 
+                                    echo $candidate
+                                fi
+                        done
                 done
         fi
 }
